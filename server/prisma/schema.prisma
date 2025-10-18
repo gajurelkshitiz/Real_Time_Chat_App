@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  // output   = "../generated/prisma"
 }
 
 datasource db {
@@ -11,9 +11,21 @@ datasource db {
 
 
 model User {
-  id Int @id @default(autoincrement())
-  email String  @unique
-  phoneNum String  @unique
-  name String?
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String?  // added
   createdAt DateTime @default(now())
+  messagesSent    Message[] @relation("sent")
+  messagesReceived Message[] @relation("received")
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  fromId    Int
+  toId      Int
+  createdAt DateTime @default(now())
+
+  from User @relation("sent", fields: [fromId], references: [id])
+  to   User @relation("received", fields: [toId], references: [id])
 }
