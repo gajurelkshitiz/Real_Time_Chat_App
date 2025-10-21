@@ -1,17 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { socket } from "./socket";
-import UsernameSelect from "./components/UsernameSelect";
+import AuthPage from "./components/AuthPage";
 import UsersList from "./components/UserList";
 import ChatWindow from "./components/ChatWindow";
 
 type User = { userID: string; username: string; self?: boolean; messages?: any[] };
 
 export default function App() {
-  const [usernameSelected, setUsernameSelected] = useState(false);
+  const [auth, setAuth] = useState<{ user: any; token: string } | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
+    if (!auth) return;
+    // Attach token and username to socket auth
+    (socket as any).auth = { username: auth.user.username, token: auth.token };
+    socket.connect();
+
     socket.on("users", (list: User[]) => {
       const enriched = list.map(u => ({ ...u, self: u.userID === socket.id, messages: [] }));
       enriched.sort((a,b)=> a.self ? -1 : a.username.localeCompare(b.username));
@@ -43,13 +48,7 @@ export default function App() {
       socket.off("user disconnected");
       socket.off("private message");
     };
-  }, []);
-
-  function onUsernameSelected(username: string) {
-    (socket as any).auth = { username };
-    socket.connect();
-    setUsernameSelected(true);
-  }
+  }, [auth]);
 
   function sendMessage(toUserID: string, content: string) {
     socket.emit("private message", { content, to: toUserID });
@@ -58,16 +57,16 @@ export default function App() {
     );
   }
 
+  if (!auth) {
+    return <AuthPage onAuth={(user, token) => setAuth({ user, token })} />;
+  }
+
   return (
     <div className="app">
-      {!usernameSelected ? (
-        <UsernameSelect onSelect={onUsernameSelected} />
-      ) : (
-        <div style={{ display: "flex" }}>
-          <UsersList users={users} onSelect={setSelectedUser} />
-          <ChatWindow selectedUser={selectedUser} onSend={sendMessage} />
-        </div>
-      )}
+      <div style={{ display: "flex" }}>
+        <UsersList users={users} onSelect={setSelectedUser} />
+        <ChatWindow selectedUser={selectedUser} onSend={sendMessage} />
+      </div>
     </div>
   );
 }

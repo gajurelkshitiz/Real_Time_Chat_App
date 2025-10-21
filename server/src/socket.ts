@@ -32,14 +32,23 @@ export function setupSocketHandlers(io: Server) {
   io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents>) => {
     console.log("connected", socket.id, "username:", socket.data.username);
 
-    // When a client connects, send currently connected users
-    const users = Array.from(io.of("/").sockets).map(([id, s]) => {
-      const sock = s as Socket;
-      return {
-        userID: id,
-        username: sock.data.username,
-      };
-    });
+    // Build a map: username -> array of sockets
+    const usernameToSockets = new Map<string, Socket[]>();
+    for (const sock of io.of("/").sockets.values()) {
+      const uname = sock.data.username;
+      if (!uname) continue;
+      if (!usernameToSockets.has(uname)) usernameToSockets.set(uname, []);
+      usernameToSockets.get(uname)!.push(sock);
+    }
+
+    // Prepare user list: one entry per username, with session count
+    const users = Array.from(usernameToSockets.entries()).map(([username, sockets]) => ({
+      username,
+      userID: sockets[0].id, // pick first socket's ID for reference
+      sessions: sockets.length,
+      self: sockets.some(s => s.id === socket.id),
+    }));
+
     socket.emit("users", users);
 
     // notify others
