@@ -49,7 +49,7 @@ export function setupSocketHandlers(io: Server) {
       self: sockets.some(s => s.id === socket.id),
     }));
 
-    socket.emit("users", users);
+    socket.emit("users", users); // emit to all sockets
 
     // notify others
     socket.broadcast.emit("user connected", {
@@ -91,7 +91,22 @@ export function setupSocketHandlers(io: Server) {
 
     socket.on("disconnect", (reason) => {
       socketToUserId.delete(socket.id);
-      socket.broadcast.emit("user disconnected", { userID: socket.id });
+
+      // Rebuild and emit user list after disconnect
+      const usernameToSockets = new Map<string, Socket[]>();
+      for (const sock of io.of("/").sockets.values()) {
+        const uname = sock.data.username;
+        if (!uname) continue;
+        if (!usernameToSockets.has(uname)) usernameToSockets.set(uname, []);
+        usernameToSockets.get(uname)!.push(sock);
+      }
+      const users = Array.from(usernameToSockets.entries()).map(([username, sockets]) => ({
+        username,
+        userID: sockets[0].id,
+        sessions: sockets.length,
+        self: false, // client should set this
+      }));
+      io.emit("users", users);
     });
   });
 }

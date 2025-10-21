@@ -3,6 +3,7 @@ import React from "react";
 type User = {
   userID: string;
   username: string;
+  sessions?: number;
   self?: boolean;
   messages?: { content: string; fromSelf: boolean }[];
 };
@@ -29,7 +30,7 @@ const UsersList: React.FC<UsersListProps> = ({ users, onSelect }) => {
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
         {users.map((user) => (
           <li
-            key={user.userID}
+            key={user.username}
             onClick={() => onSelect(user)}
             style={{
               cursor: "pointer",
@@ -39,8 +40,11 @@ const UsersList: React.FC<UsersListProps> = ({ users, onSelect }) => {
               borderRadius: "8px",
             }}
           >
-            <strong>{user.username}</strong>{" "}
+            <strong>{user.username}</strong>
             {user.self && <span style={{ color: "green" }}>(You)</span>}
+            {user.sessions && user.sessions > 1 && (
+              <span style={{ color: "gray" }}> ({user.sessions} tabs)</span>
+            )}
           </li>
         ))}
       </ul>
