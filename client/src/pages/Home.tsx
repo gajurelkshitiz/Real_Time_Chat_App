@@ -24,6 +24,7 @@ export default function Home({
   // friends hook: fetch friends / all users / addFriend
   const { friends, fetchFriends, allUsers, fetchAllUsers, addFriend } = useFriends();
 
+
   useEffect(() => {
     if (!auth) return;
     (socket as any).auth = { username: auth.user.username, token: auth.token };
@@ -66,11 +67,15 @@ export default function Home({
     return users
       .map(u => {
         const f = friends.find(fr => fr.username === u.username);
+        console.log('FRIENDS FOUND: ', f);
         if (f && f.id !== undefined) return { ...u, id: f.id } as User;
         return null;
       })
       .filter(Boolean) as User[];
   }, [users, friends]);
+
+
+  console.log("ONLINE FRIENDS: ", onlineFriends);
 
   function sendMessage(toUserID: string, content: string) {
     socket.emit("private message", { content, to: toUserID });
@@ -98,6 +103,7 @@ export default function Home({
           onLogout();
         }}
         onToggleFind={() => setShowFindFriends(v => !v)}
+        currentUser={auth.user}
       />
       <main className="flex h-[calc(100vh-64px)]">
         <UserList users={onlineFriends} onSelect={setSelectedUser} />
