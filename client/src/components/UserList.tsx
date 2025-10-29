@@ -1,16 +1,9 @@
 import React from "react";
-
-type User = {
-  userID: string;
-  username: string;
-  sessions?: number;
-  self?: boolean;
-  messages?: { content: string; fromSelf: boolean }[];
-};
+import type { User } from './../types/User';
 
 interface UsersListProps {
   users: User[];
-  onSelect: (user: User) => void;
+  onSelect: (user: User) => any;
 }
 
 const UsersList: React.FC<UsersListProps> = ({ users, onSelect }) => {

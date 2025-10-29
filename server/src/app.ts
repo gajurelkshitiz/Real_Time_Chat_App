@@ -6,6 +6,7 @@ import cors from "cors";
 import { prisma } from "./prismaClient";
 import { setupSocketHandlers } from "./socket";
 import authRoutes from "./routes/auth";
+import friendsRoutes from "./routes/friends";
 import dotenv from "dotenv";
 import type { ClientToServerEvents, ServerToClientEvents } from "./types";
 
@@ -17,7 +18,7 @@ app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
 app.use(express.json());
 
 app.use("/auth", authRoutes);
-
+app.use("/friends", friendsRoutes);
 
 
 // create HTTP server and attach socket.io
